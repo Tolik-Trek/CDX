@@ -1,0 +1,7 @@
+
+                   CDROM eXtension utility version 1.01
+             ------------------------------------------------
+
+ It's utility came for solving the problem with support CDROM in DSS ver 1.x.
+It's allow browse and copy files that stored on your CD. Also utility has commands
+for tray control.
