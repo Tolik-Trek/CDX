@@ -92,40 +92,45 @@ START:	PUSH	IX
 	OR	A
 	CALL	Z,COMMAND
 
-	CALL	MDEALLOC
-QUIT:	CALL	CRLF
-.loop:	LD	BC,Dss.Exit
-	RST	ToDSS
-	JP	.loop
+	;CALL	MDEALLOC
+QUIT:		CALL	CRLF
+.set_par+1:	LD	B,1
+		LD	C,BIOS.DRV_SET_PAR
+		LD	A,(CDDRIVE)
+		RST	ToBIOS
+		;
+.loop:		LD	BC,Dss.Exit
+		RST	ToDSS
+		JP	.loop
 
 OLD_DSS
 	LD	A,MSG_OLD_DSS
 	CALL	MESSAGE
 	JR	QUIT
 
-HNDMEM	DB	#FF
+;HNDMEM	DB	#FF
 
-MALLOC
+MALLOC:
 	LD	BC,2*256 + Dss.GetMem
 	RST	ToDSS
-	JR	NC,M_ALLOK
+	JR	NC,.cont
 	LD	A,MSG_MEMERROR
 	CALL	MESSAGE
 	SCF
 	RET
-M_ALLOK
-	LD	(HNDMEM),A
+	;
+.cont:	PUSH	AF
 	LD	BC,1*256 + Dss.SetWin3
 	RST	ToDSS
 	LD	HL,BANKTBL
 	LD	C,BIOS.GetMemBlkPages
-	LD	A,(HNDMEM)
+	POP	AF
 	JP	ToBIOS
 
-MDEALLOC
-	LD	A,(HNDMEM)
-	LD	C,Dss.FreeMem
-	JP	ToDSS
+; MDEALLOC
+; 	LD	A,(HNDMEM)
+; 	LD	C,Dss.FreeMem
+; 	JP	ToDSS
 
 ; FIND_CDROM
 ; 	LD	IX,DEV_CFG
@@ -198,14 +203,34 @@ INIT:	XOR	A
 	PUSH	BC
 	RST	ToBIOS
 	POP	BC
-	JR	C,.loop
+	JR	NC,.found
+	;
+	CP	BIOS.Error.ATAPI.UnitAttention
+	JR	NZ,.loop
+	;
+	PUSH	BC
 	LD	A,B
+	CALL	SAVE_MEDIA_CHANGED
+	POP	BC
+	;
+.found:	LD	A,B
 	LD	(CDDRIVE),A
 	RET
 	;
 	; LD	C,BIOS.DRV_RESET
 	; JP	ToBIOS
 ;	RET
+
+SAVE_MEDIA_CHANGED:
+		LD	C,BIOS.DRV_GET_PAR
+		RST	ToBIOS
+		OR	%0000'0010
+		LD	B,A
+		LD	A,(QUIT.set_par)
+		OR	B
+		LD	(QUIT.set_par),A
+		RET
+
 
 ;VARIABLES
 
@@ -421,7 +446,7 @@ MSG_COPYABORTED		EQU	19	;21
 
 MSG0	BYTE	0
 ;0
-	BYTE	"CDROM eXtension utility v1.01, 2023 (c) Sprinter Team",CR,LF
+	BYTE	"CDROM eXtension utility v1.02, 2025 (c) Sprinter Team",CR,LF
 	DZ	"Type CDX.EXE -? for help.",CR,LF,CR,LF
 ;1
 	DZ	"Opening tray..."
