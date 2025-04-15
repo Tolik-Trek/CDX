@@ -1,5 +1,5 @@
 
-                   CDROM eXtension utility version 1.01
+                   CDROM eXtension utility version 1.02.01
              ------------------------------------------------
 
  It's utility came for solving the problem with support CDROM in DSS ver 1.x.

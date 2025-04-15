@@ -12,8 +12,7 @@
 ;	COMMAND
 ; -h,?	Help page
 
-	DEFINE _MAME 1
-
+MAX_DSS_ERR	EQU	33
 
 CR	EQU	13
 LF	EQU	10
@@ -241,9 +240,23 @@ SAVE_MEDIA_CHANGED:
 
 STOPMODE	DB	#00
 
-	INCLUDE	"cmdparse.asm"
-	INCLUDE	"command.asm"
-	INCLUDE	"cd_dos.asm"
+
+
+
+CMD_PARSE_ASM.Start:	INCLUDE	"cmdparse.asm"
+CMD_PARSE_ASM.End	EQU	$
+	DISPLAY	"cmdparse.asm size:	",/D,CMD_PARSE_ASM.End - CMD_PARSE_ASM.Start
+	;
+COMMAND_ASM.Start	INCLUDE	"command.asm"
+COMMAND_ASM.End		EQU	$
+	DISPLAY	"command.asm size:	",/D,COMMAND_ASM.End - COMMAND_ASM.Start
+	;
+CD_DOS_ASM.Start:	INCLUDE	"cd_dos.asm"
+CD_DOS_ASM.End		EQU	$
+	DISPLAY	"cd_dos.asm size:	",/D,CD_DOS_ASM.End - CD_DOS_ASM.Start
+
+
+
 
 CRLF:	PUSH	HL
 	LD	HL,MSG0.crlf
@@ -258,11 +271,11 @@ CRLF:	PUSH	HL
 	RET
 ;
 
-ERROR:		CP	MAX_DSS_ERR
+ERROR:		;CP	MAX_DSS_ERR
 		LD	E,A
 		LD	D,0
-		JR	C,.ERR_MSG
-		LD	E,D
+		;JR	C,.ERR_MSG
+		;LD	E,D
 		;JP	.ERR_MSG
 		;
 .ERR_MSG:	PUSH	DE
@@ -275,20 +288,70 @@ ERROR:		CP	MAX_DSS_ERR
 		JP	CRLF
 
 
-FMESAGE	INC	DE
-	LD	HL,ERR0
-	LD	BC,ERR0.Size
-LCPIR	XOR	A
-	CPIR
-	RET	PO
-	RET	NZ
-	DEC	DE
-	LD	A,D
-	OR	E
-	JP	NZ,LCPIR
-	RET
+FMESAGE:	LD	A,E
+		LD	HL,SYS_ERRORS		; массив строк
+		LD	BC,SYS_ERRORS.Size	; размер массива
+		RLA
+		jr	nc,.set_de		
+		ld	hl,DRV_ERRORS		; массив строк
+		ld	bc,DRV_ERRORS.Size	; размер массива
+.set_de:	SRL	A
+		LD	E,A
+		INC	DE
+LCPIR:		XOR	A
+		CPIR
+		RET	PO
+		RET	NZ
+		;
+		XOR	A
+		CP	(HL)
+		JR	Z,.no_mess
+		;
+		DEC	DE
+		LD	A,D
+		OR	E
+		JP	NZ,LCPIR
+		RET
+.no_mess:	INC	HL
+		RET
+/*
+LCPIR:		xor	a
+		cpir
+		ret	po
+		ret	nz
+		;R11
+		 XOR	A
+		 CP	(HL)
+		 JR	Z,.no_mess
+		;
+		dec	de
+		ld	a,d
+		or	e
+		jr	nz,LCPIR
+		ret
+.no_mess:	INC	HL
+		RET
 
-MAX_DSS_ERR	EQU	33
+
+print_err_message:
+		ld	hl,SYS_ERRORS		; массив строк
+		ld	bc,SYS_ERRORS.Size	; размер массива
+		;cp	%1000'0000
+		RLA
+		jr	nc,.set_de
+		;
+		;and	%0111'1111
+		ld	hl,DRV_ERRORS		; массив строк
+		ld	bc,DRV_ERRORS.Size	; размер массива
+		;
+.set_de:	SRL	A
+		ld	e,a
+		ld	d,0
+		inc	de
+		call	LCPIR			; найти строку
+		call	PRINTZ			; формат. вывод строки
+		jp	newline
+*/
 
 ERRCDX	DB	"CDX: ",0
 
@@ -448,8 +511,8 @@ MSG_COPYABORTED		EQU	19	;21
 
 MSG0	BYTE	0
 ;0
-	BYTE	"CDROM eXtension utility v1.02, 2025 (c) Sprinter Team",CR,LF
-	DZ	"Type CDX.EXE -? for help.",CR,LF,CR,LF
+	BYTE	"CDROM eXtension utility v1.02.1, 2025 (c) Sprinter Team",CR,LF
+	DZ	"Type CDX.EXE -? for help.",CR,LF
 ;1
 	DZ	"Opening tray..."
 ;2
@@ -547,5 +610,6 @@ BUFERS_NUMBER	EQU 6
 ;
 	ASSERT (DUMPBUF+2048 < #C000), "NO FREE SPACE FOR BUFFERS"
 ;-----------------------------------------------------------------------;
-DEV_CFG
+DEV_CFG:
+	DISPLAY "\n\tCDX size:	",/D,DEV_CFG - START
 ;[END]
