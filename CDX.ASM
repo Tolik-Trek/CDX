@@ -190,37 +190,36 @@ MALLOC:
 ;	RST	ToDSS
 ;	RET
 
-INIT:	XOR	A
-	LD	(STOPMODE),A
-	DEC	A
-	LD	(CDDRIVE),A
-	;
-	LD	BC,+(#C0-1)*256 + BIOS.DRV_DETECT
-.loop:	INC	B
-	LD	A,B
-	CP	#C4
-	SCF
-	RET	Z
-	PUSH	BC
-	RST	ToBIOS
-	POP	BC
-	JR	NC,.found
-	;
-	CP	BIOS.Error.ATAPI.UnitAttention
-	JR	NZ,.loop
-	;
-	PUSH	BC
-	LD	A,B
-	CALL	SAVE_MEDIA_CHANGED
-	POP	BC
-	;
-.found:	LD	A,B
-	LD	(CDDRIVE),A
-	RET
-	;
-	; LD	C,BIOS.DRV_RESET
-	; JP	ToBIOS
-;	RET
+INIT:		XOR	A
+		LD	(STOPMODE),A
+		DEC	A
+		LD	(CDDRIVE),A
+		;
+		LD	BC,+(#C0-1)*256 + BIOS.DRV_DETECT
+.loop:		INC	B
+		LD	A,B
+		CP	#C4
+		SCF
+		RET	Z
+		PUSH	BC
+		RST	ToBIOS
+		POP	BC
+		JR	NC,.found
+		;
+		CP	BIOS.Error.ATAPI.MediumError
+		JR	Z,.media_changed
+		CP	BIOS.Error.ATAPI.UnitAttention
+		JR	NZ,.loop
+		;
+.media_changed:	PUSH	BC
+		LD	A,B
+		CALL	SAVE_MEDIA_CHANGED
+		POP	BC
+		;
+.found:		LD	A,B
+		LD	(CDDRIVE),A
+		RET
+
 
 SAVE_MEDIA_CHANGED:
 		LD	C,BIOS.DRV_GET_PAR
