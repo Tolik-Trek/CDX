@@ -63,7 +63,7 @@ FM_BUF	DB	".       "	;+00 NAME
 	DB	#00		;+43 EMPTY
 END_FM
 ;End of	FM
-	DS	44*2
+;	DS	44*2
 
 FM_SIZE	EQU	END_FM-FM_BUF
 
@@ -159,20 +159,19 @@ CHANGEDISK:	LD	A,(CDDRIVE)
 		RET 		
 		;
 .drv_change:	LD	A,(CDDRIVE)
-		LD	C,BIOS.DRV_GET_PAR
-		RST	ToBIOS
+		CALL	SAVE_MEDIA_CHANGED
 		;
 .cont:		CALL	INITDISK
 		RET	C
 		AND	A
 		RET 
 
-NDISK11	CP	BIOS.Error.ATAPI.NotReady
-	SCF 
-	RET	NZ
-	;
-	LD	A,DSS_Error.sys.NOT_READY
-	RET 
+; NDISK11	CP	BIOS.Error.ATAPI.NotReady
+; 	SCF 
+; 	RET	NZ
+; 	;
+; 	LD	A,DSS_Error.sys.NOT_READY
+; 	RET 
 
 INITDISK:
 	LD	A,DIRPAGE
