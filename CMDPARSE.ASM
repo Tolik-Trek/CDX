@@ -68,6 +68,8 @@ EX_COMMAND_LINE:
 		POP	IX
 		JR	NC,.EOCL
 		;
+		CP	BIOS.Error.ATAPI.MediumError
+		JR	Z,.EOCL
 		CP	BIOS.Error.ATAPI.UnitAttention
 		JR	NZ,.error
 		;

@@ -22,11 +22,11 @@ COMP01:		LD	D,H
 COMP004:	PUSH	BC
 		PUSH	DE
 COMP000:	LD	A,(DE)
-		CP	#61
+		CP	'a' 
 		JP	C,COMP001
-		CP	#7B
+		CP	'z' + 1
 		JP	NC,COMP001
-		SUB	#20
+		SUB	%0010'0000
 COMP001:	CP	(HL)
 		JP	NZ,COMP002
 		INC	HL
@@ -51,8 +51,8 @@ NOSPC:		INC	HL
 
 COMP002:	XOR	A
 		LD	C,#FF
-		CPI
-		JP	NZ,$-2
+.loop:		CPI
+		JP	NZ,.loop
 		INC	HL
 		INC	HL
 		POP	DE
